@@ -1,0 +1,140 @@
+---
+title: "Getting started with nitRo"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with nitRo}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+options(cli.num_colors = 1)
+set.seed(2026)
+```
+
+```{r setup}
+library(nitRo)
+```
+
+## Analysing an expression
+
+Pass code to `nitro()` unquoted, exactly as you would write it in a script.
+Wrap several lines in `{ }`.
+
+```{r}
+nitro({
+  total <- 0
+  for (i in 1:length(values)) {
+    total <- total + values[i]
+  }
+}, benchmark = FALSE)
+```
+
+Each line of the report shows the severity symbol, the rule id, the line
+it was found on and a short message. `[fixed]` marks findings that nitRo
+rewrote. Here only `BASE001` has an automatic fix. The running total is
+reported, but rewriting it as `sum(values)` would change the structure of
+the code, so that is left to you.
+
+`benchmark = FALSE` is used because `values` does not exist, so the code
+cannot be run.
+
+## Explanations
+
+`verbose = TRUE` adds an explanation and a reference to each finding.
+
+```{r}
+res <- nitro(if (class(fit) == "lm") summary(fit), benchmark = FALSE)
+print(res, verbose = TRUE)
+```
+
+## Verifying and benchmarking a rewrite
+
+When at least one fix is applied and `benchmark = TRUE` (the default),
+`nitro()` runs the original and the optimised code. It first runs each once
+and checks that the results are identical, then times both with
+`microbenchmark`.
+
+```{r}
+m <- matrix(runif(250000), nrow = 500)
+
+res <- nitro({
+  row_totals <- apply(m, 1, sum)
+  col_means  <- apply(m, 2, mean)
+}, times = 20)
+res
+```
+
+"Identical" means that the value of the last expression and every variable
+the code creates are `identical()` in the two versions. The code runs in a
+new environment each time, so `row_totals` and `col_means` are not created
+in your workspace.
+
+## Extracting results
+
+```{r}
+get_optimised(res)
+get_findings(res)[, c("rule_id", "severity", "line", "auto_fix")]
+res$speedup$speedup
+summary(res)
+```
+
+## Analysing a script
+
+`nitro_file()` reads an `.R` file. It keeps comments, reports line numbers
+of the file, and never runs the code. The file itself is not changed.
+
+```{r}
+path <- tempfile(fileext = ".R")
+writeLines(c(
+  "# read and clean the data",
+  "d <- read.csv(\"input.csv\")",
+  "d$name <- gsub(\"-\", \" \", d$name)",
+  "big <- length(which(d$value > 100))"
+), path)
+
+res <- nitro_file(path)
+res
+unlink(path)
+```
+
+To keep the optimised version, write it out yourself:
+
+```{r, eval = FALSE}
+writeLines(get_optimised(res), "script_optimised.R")
+```
+
+## Choosing which rules to check
+
+```{r}
+nitro({
+  d <- read.csv("input.csv")
+  if (d$flag == NA) d$flag <- FALSE
+}, severities = "error_prone", benchmark = FALSE)
+```
+
+`categories` works the same way. Both arguments accept several values.
+
+## The rules
+
+```{r}
+rules <- list_rules()
+knitr::kable(rules[, c("id", "severity", "auto_fix", "message")])
+```
+
+Severity levels:
+
+- **error_prone**: can give wrong results or errors in some cases.
+- **warning**: measurably slower than an equivalent.
+- **suggestion**: an alternative may be faster depending on the data.
+- **style**: readability or robustness only.
+
+## Limitations
+
+Rules are regular expressions applied to the text of the code. They can
+match text inside string literals, and most automatic fixes only recognise
+the simplest form of a pattern, such as `apply(m, 1, sum)` where `m` is a
+plain variable name. Suggestions do not know how large your data is, so
+advice such as using `data.table::fread()` or running iterations in parallel
+only pays off for large inputs or slow calls.
