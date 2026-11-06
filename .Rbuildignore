@@ -1,0 +1,11 @@
+^\.github$
+^LICENSE\.md$
+^README\.Rmd$
+^cran-comments\.md$
+^CRAN-SUBMISSION$
+^RELEASING\.md$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^\.Rproj\.user$
+^.*\.Rproj$
