@@ -1,7 +1,7 @@
 Package: nitRo
 Title: Find and Fix Slow or Unsafe Patterns in R Code
 Version: 0.1.0
-Authors@R: 
+Authors@R:
     person("Vishal Kumar", "Sharma", , "vishalsharma3003@gmail.com",
            role = c("aut", "cre", "cph"))
 Description: Analyses R code for common performance problems and unsafe
@@ -16,13 +16,13 @@ Description: Analyses R code for common performance problems and unsafe
 License: MIT + file LICENSE
 URL: https://github.com/vishalsharma3003/nitRo
 BugReports: https://github.com/vishalsharma3003/nitRo/issues
-Depends: 
+Depends:
     R (>= 4.1.0)
-Imports: 
+Imports:
     cli (>= 3.6.0),
     microbenchmark (>= 1.4.10),
     stats
-Suggests: 
+Suggests:
     knitr,
     rmarkdown,
     testthat (>= 3.0.0)
