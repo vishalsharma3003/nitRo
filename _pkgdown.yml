@@ -1,0 +1,21 @@
+url: https://vishalsharma3003.github.io/nitRo/
+
+template:
+  bootstrap: 5
+
+reference:
+  - title: Analysis
+    contents:
+      - nitro
+      - nitro_file
+  - title: Results
+    contents:
+      - get_optimised
+      - print.nitro
+      - summary.nitro
+  - title: Rules
+    contents:
+      - list_rules
+  - title: Package
+    contents:
+      - nitRo-package
